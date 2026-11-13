@@ -1,0 +1,45 @@
+name: Build macOS Apps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'cat_mac.py'
+      - 'snow_mac.py'
+      - '.github/workflows/build-mac.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install PyQt6 pyobjc-framework-Quartz pyinstaller
+
+      - name: Build BlackCat.app and DesktopSnow.app
+        run: |
+          python3 -m PyInstaller --windowed --onefile --name "BlackCat" cat_mac.py
+          python3 -m PyInstaller --windowed --onefile --name "DesktopSnow" snow_mac.py
+          cd dist
+          zip -r BlackCat-macOS.zip BlackCat.app
+          zip -r DesktopSnow-macOS.zip DesktopSnow.app
+
+      - name: Upload to Release v1.0
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0
+          files: |
+            dist/BlackCat-macOS.zip
+            dist/DesktopSnow-macOS.zip
